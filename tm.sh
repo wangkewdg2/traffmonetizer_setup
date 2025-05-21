@@ -4,6 +4,17 @@
 DEFAULT_TOKEN="kDrymy6C63E9Pz5vgL0VJ6q3NOHG2zHxNAVXXurSg/0=" # 你的默认Token，以防用户不输入
 TRAFFMONETIZER_CONTAINER_NAME="tm"
 
+# --- 函数：安装 curl ---
+install_curl() {
+    echo "正在安装 curl..."
+    sudo apt update -y
+    sudo apt install -y curl
+    if [ $? -ne 0 ]; then
+        echo "错误：curl 安装失败，请检查网络连接或系统包管理器。"
+        exit 1
+    fi
+    echo "curl 安装完成。"
+}
 
 # --- 函数：安装 Docker ---
 install_docker() {
@@ -99,7 +110,33 @@ setup_cron_job() {
     fi
 }
 
+# --- 主程序流程 ---
+echo "--- Traffmonetizer 一键安装及运行脚本 ---"
+
+# 1. 安装 curl 和 Docker
+install_curl
+install_docker
+
+# 确保用户可以运行 docker 命令 (如果之前没有生效)
+# 注意：这一步通常需要用户手动重新登录或执行 newgrp docker
+# 这里只是一个提示，脚本无法强制用户重新登录
+echo ""
+echo "重要提示：为了确保您可以无需 sudo 运行 docker 命令，您可能需要重新登录终端或执行 'newgrp docker' 命令。"
+echo "请在继续之前尝试运行 'docker ps' 来验证是否已生效。"
+echo "如果没有生效，请重新登录，然后再次运行此脚本。"
+echo "脚本将在5秒后继续..."
+sleep 5
+
+# 2. 获取用户输入的 Token
+get_user_token
+
+# 3. 运行 Traffmonetizer 容器
+run_traffmonetizer
+
+# 4. 设置 cron job
+setup_cron_job
+
 echo ""
 echo "脚本执行完毕！"
 echo "您可以使用 'docker logs ${TRAFFMONETIZER_CONTAINER_NAME}' 查看容器日志。"
-
+echo "如果首次运行后 docker 命令依然需要 sudo，请务必重新登录或执行 'newgrp docker'。"
