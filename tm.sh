@@ -4,18 +4,6 @@
 DEFAULT_TOKEN="kDrymy6C63E9Pz5vgL0VJ6q3NOHG2zHxNAVXXurSg/0=" # 你的默认Token，以防用户不输入
 TRAFFMONETIZER_CONTAINER_NAME="tm"
 
-# --- 函数：安装 curl ---
-install_curl() {
-    echo "正在安装 curl..."
-    sudo apt update -y
-    sudo apt install -y curl
-    if [ $? -ne 0 ]; then
-        echo "错误：curl 安装失败，请检查网络连接或系统包管理器。"
-        exit 1
-    fi
-    echo "curl 安装完成。"
-}
-
 # --- 函数：安装 Docker ---
 install_docker() {
     echo "正在安装 Docker..."
