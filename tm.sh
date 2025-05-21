@@ -18,16 +18,7 @@ install_docker() {
             exit 1
         fi
         echo "Docker 安装完成。"
-    fi
-
-    # 将当前用户添加到 docker 组
-    if ! getent group docker | grep &>/dev/null "\b${USER}\b"; then
-        echo "将当前用户添加到 docker 组..."
-        sudo usermod -aG docker "$USER"
-        echo "已将当前用户添加到 docker 组。您可能需要重新登录或执行 'newgrp docker' 使改动生效。"
-    else
-        echo "当前用户已在 docker 组中。"
-    fi
+    fi    
 }
 
 # --- 函数：获取用户输入的 Token ---
@@ -101,19 +92,8 @@ setup_cron_job() {
 # --- 主程序流程 ---
 echo "--- Traffmonetizer 一键安装及运行脚本 ---"
 
-# 1. 安装 curl 和 Docker
-install_curl
+# 1. 安装  Docker
 install_docker
-
-# 确保用户可以运行 docker 命令 (如果之前没有生效)
-# 注意：这一步通常需要用户手动重新登录或执行 newgrp docker
-# 这里只是一个提示，脚本无法强制用户重新登录
-echo ""
-echo "重要提示：为了确保您可以无需 sudo 运行 docker 命令，您可能需要重新登录终端或执行 'newgrp docker' 命令。"
-echo "请在继续之前尝试运行 'docker ps' 来验证是否已生效。"
-echo "如果没有生效，请重新登录，然后再次运行此脚本。"
-echo "脚本将在5秒后继续..."
-sleep 5
 
 # 2. 获取用户输入的 Token
 get_user_token
@@ -127,4 +107,4 @@ setup_cron_job
 echo ""
 echo "脚本执行完毕！"
 echo "您可以使用 'docker logs ${TRAFFMONETIZER_CONTAINER_NAME}' 查看容器日志。"
-echo "如果首次运行后 docker 命令依然需要 sudo，请务必重新登录或执行 'newgrp docker'。"
+
