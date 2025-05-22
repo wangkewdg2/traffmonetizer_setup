@@ -1,23 +1,40 @@
-如果已经有traffmonetizer账号，可以跳过第一环节
-一：注册账号，获取token
-1.点击链接[traffmontizer官网](https://traffmonetizer.com/?aff=230088)，此链接带aff（aff对彼此都好，介意的话自己搜索），按步骤注册账号。
-2.获取token,如图所示：
+🚀 Traffmonetizer 一键部署脚本
+轻松将您的 VPS 变成被动收入来源！本脚本帮助您快速部署和管理 Traffmonetizer 客户端，让您的闲置带宽产生价值。
+
+💡 快速开始 (已有 Traffmonetizer 账号？跳过此步！)
+如果您已经拥有 Traffmonetizer 账号，可以直接跳到第二部分。
+
+1. 注册账号并获取 Token
+通过以下链接注册您的 Traffmonetizer 账号：
+👉[traffmontizer官网](https://traffmonetizer.com/?aff=230088)
+
+温馨提示： 使用此推广链接对您我都好，如果您介意，也可以自行搜索官网。
+
+注册完成后，请按照下图所示获取您的 Token：
 ![image](https://tc.cecily.eu.org/file/1747828582529_图片1.png)
+⚙️ VPS 上安装并运行 Traffmonetizer
+现在，让我们在您的 VPS 上部署 Traffmonetizer！
 
+1. 切换到 Root 账户
+首先，请确保您已切换到 root 账户以执行安装。
 
-二：vps安装并运行traffmonetizer
-1.切换到root账户
-2.输入：bash -c "$(curl -fsSL https://raw.githubusercontent.com/wangkewdg2/traffmonetizer_setup/main/tm.sh)"
-3.按照提示输入token,如图所示：
-![image](https://tc.cecily.eu.org/file/1747829000087_image.png)
+2. 运行一键安装脚本
+在您的 VPS 上输入以下命令并执行：
 
-至此脚本已经安装完成，可以登录官网左侧链接“staus”查看是否已经挂上。
+Bash
 
-脚本每天凌晨一点会重启traffmonetizer，避免掉线；理论上任何操作系统都可以安装（使用docker），脚本支持AMD64或者ARM64位处理器安装。
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/wangkewdg2/traffmonetizer_setup/main/tm.sh)"
+3. 输入您的 Token
+按照脚本提示，输入您在第一步中获取到的 Token：
 
-常见问题：
-1.挂traffmonetizer会不会导致vps被封，或者ip风险因子变高？
-答：以实际经验回答，我挂了十多台不同商家的vps，没有vps被封，ip风险因子不会变化，几乎不占用cpu，每月流量10G以内。
+恭喜！ 脚本已经成功安装并运行 Traffmonetizer。您可以登录 Traffmonetizer 官网，点击左侧导航栏的 "Status" 链接，查看您的设备是否已经成功上线。
 
-2.挂traffmonetizer收益如何？
-答：只是给vps的费用回点血，别想赚大钱，根据ip不同，一台vps一年大概3-5美金。目前只有独立ipv4有收益，ipv6没有。
+✨ 脚本特性
+自动重启： 脚本会在每天凌晨 1 点自动重启 Traffmonetizer，有效避免掉线。
+广泛兼容： 理论上支持任何操作系统（通过 Docker 运行），并兼容 AMD64 或 ARM64 位处理器。
+❓ 常见问题解答
+1. 运行 Traffmonetizer 会导致 VPS 被封或 IP 风险增加吗？
+答： 根据我的实际经验，挂载 Traffmonetizer 不会导致 VPS 被封禁，也不会增加 IP 风险因子。我已经在十几台不同服务商的 VPS 上运行，没有遇到任何问题。它几乎不占用 CPU 资源，每月流量消耗也在 10GB 以内。
+
+2. 运行 Traffmonetizer 的收益如何？
+答： Traffmonetizer 主要是为了回血 VPS 费用，而不是为了赚大钱。根据 IP 质量不同，一台 VPS 一年大概能带来 2-5 美元的收益。目前只有独立的 IPv4 地址有收益，IPv6 暂无。
