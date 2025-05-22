@@ -1,10 +1,9 @@
 🚀 Traffmonetizer 一键部署脚本
 
-轻松将VPS 变成被动收入来源！一年大概 2-5 美元收益。
+轻松将VPS 变成被动收入来源！每台vps一年大概 2-5 美元收益。
 
 💡 快速开始 (已有 Traffmonetizer 账号？跳过此步！)
 
- 注册账号并获取 Token
  
 通过以下链接注册 Traffmonetizer 账号：
 👉[traffmontizer官网](https://traffmonetizer.com/?aff=230088)
@@ -12,6 +11,7 @@
 温馨提示： 使用此推广链接对您我都好，如果您介意，也可以自行搜索官网。
 
 注册完成后，请按照下图所示获取您的 Token：
+
 ![image](https://tc.cecily.eu.org/file/1747828582529_图片1.png)
 
 ⚙️ VPS 上安装并运行 Traffmonetizer
