@@ -2,9 +2,8 @@
 轻松将VPS 变成被动收入来源！一年大概 2-5 美元收益。
 
 💡 快速开始 (已有 Traffmonetizer 账号？跳过此步！)
-如果已经拥有 Traffmonetizer 账号，可以直接跳到第二部分。
 
-1. 注册账号并获取 Token
+ 注册账号并获取 Token
 通过以下链接注册 Traffmonetizer 账号：
 👉[traffmontizer官网](https://traffmonetizer.com/?aff=230088)
 
@@ -16,14 +15,13 @@
 ⚙️ VPS 上安装并运行 Traffmonetizer
 
 1. 切换到 Root 账户
-首先，请确保切换到 root 账户以执行安装。
 
 2. 运行一键安装脚本
+   
 在VPS 上输入以下命令并执行：
 
-Bash
-
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/wangkewdg2/traffmonetizer_setup/main/tm.sh)"
+
 3. 输入 Token
 按照脚本提示，输入第一步中获取到的 Token：
 
@@ -32,7 +30,9 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/wangkewdg2/traffmonetize
 ✨ 脚本特性
 自动重启： 脚本会在每天凌晨 1 点自动重启 Traffmonetizer，有效避免掉线。
 广泛兼容： 理论上支持任何操作系统（通过 Docker 运行），并兼容 AMD64 或 ARM64 位处理器。
+
 ❓ 常见问题解答
+
 1. 运行 Traffmonetizer 会导致 VPS 被封或 IP 风险增加吗？
 答： 根据我的实际经验，挂载 Traffmonetizer 不会导致 VPS 被封禁，也不会增加 IP 风险因子。我已经在十几台不同服务商的 VPS 上运行，没有遇到任何问题。它几乎不占用 CPU 资源，每月流量消耗也在 10GB 以内。
 
