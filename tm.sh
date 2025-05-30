@@ -73,19 +73,29 @@ run_traffmonetizer() {
     echo "Traffmonetizer 容器 '${TRAFFMONETIZER_CONTAINER_NAME}' 已成功启动！"
 }
 
-# --- 函数：设置每天凌晨1点重启 cron job ---
+# --- 函数：设置每周一凌晨1点重启 cron job ---
 setup_cron_job() {
-    echo "正在设置每天凌晨1点重启 Traffmonetizer 容器..."
+    echo "正在设置每周一凌晨1点重启 Traffmonetizer 容器..."
+    
+    # 定义 cron job 命令
+    CRON_COMMAND="docker restart ${TRAFFMONETIZER_CONTAINER_NAME}"
+    
     # 检查 cron job 是否已存在以避免重复添加
-    if ! crontab -l 2>/dev/null | grep -q "docker restart ${TRAFFMONETIZER_CONTAINER_NAME}"; then
-        (crontab -l 2>/dev/null; echo "0 1 * * * docker restart ${TRAFFMONETIZER_CONTAINER_NAME}") | crontab -
+    # 注意：这里 grep 的内容需要与我们即将添加的 cron job 表达式和命令完全匹配
+    # 为了避免因为时间不同而误判，我们只检查命令部分
+    if ! crontab -l 2>/dev/null | grep -q "${CRON_COMMAND}"; then
+        # 添加新的 cron job：每周一凌晨1点执行重启命令
+        (crontab -l 2>/dev/null; echo "0 1 * * 1 ${CRON_COMMAND}") | crontab -
+        
         if [ $? -ne 0 ]; then
             echo "警告：设置 cron job 失败，请手动检查或添加 cron job。"
         else
-            echo "已设置每天凌晨1点自动重启 '${TRAFFMONETIZER_CONTAINER_NAME}' 容器。"
+            echo "已设置每周一凌晨1点自动重启 '${TRAFFMONETIZER_CONTAINER_NAME}' 容器。"
         fi
     else
-        echo "每天凌晨1点重启 '${TRAFFMONETIZER_CONTAINER_NAME}' 的 cron job 已存在。"
+        echo "每周一凌晨1点重启 '${TRAFFMONETIZER_CONTAINER_NAME}' 的 cron job 已存在。"
+        # 可选：如果你想确保时间也正确，可以在这里添加更精确的检查或更新逻辑
+        # 例如，可以检查是否已存在 "0 1 * * 1 docker restart ..."
     fi
 }
 
