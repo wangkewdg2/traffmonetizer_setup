@@ -1,120 +1,112 @@
 #!/bin/bash
 
 # --- 变量定义 ---
-DEFAULT_TOKEN="kDrymy6C63E9Pz5vgL0VJ6q3NOHG2zHxNAVXXurSg/0=" # 你的默认Token，以防用户不输入
+DEFAULT_TOKEN="kDrymy6C63E9Pz5vgL0VJ6q3NOHG2zHxNAVXXurSg/0="
 TRAFFMONETIZER_CONTAINER_NAME="tm"
 
 # --- 函数：安装 Docker ---
 install_docker() {
-    echo "正在安装 Docker..."
-    # 检查 Docker 是否已安装
+    echo "--- 正在检查 Docker 状态 ---"
     if command -v docker &> /dev/null; then
         echo "Docker 已安装，跳过安装步骤。"
     else
+        echo "正在安装 Docker..."
         curl -fsSL https://get.docker.com -o get-docker.sh
         sudo sh get-docker.sh
         if [ $? -ne 0 ]; then
-            echo "错误：Docker 安装失败，请检查网络连接或系统配置。"
+            echo "错误：Docker 安装失败，请检查网络连接。"
             exit 1
         fi
         echo "Docker 安装完成。"
     fi    
 }
 
-# --- 函数：获取用户输入的 Token ---
+# --- 函数：获取 Token ---
 get_user_token() {
     echo ""
     echo "================================================"
-    echo "请按提示输入你的 Traffmonetizer Token。"
-    echo "如果你不输入，将使用默认 Token。"
+    echo "请输入你的 Traffmonetizer Token。"
+    echo "直接回车将使用默认 Token。"
     echo "================================================"
-    read -p "请输入你的 Traffmonetizer Token (按回车使用默认Token: $DEFAULT_TOKEN): " USER_TOKEN
-    if [ -z "$USER_TOKEN" ]; then
-        TRAFFMONETIZER_TOKEN="$DEFAULT_TOKEN"
-        echo "未输入 Token，将使用默认 Token: $TRAFFMONETIZER_TOKEN"
-    else
-        TRAFFMONETIZER_TOKEN="$USER_TOKEN"
-        echo "将使用你输入的 Token: $TRAFFMONETIZER_TOKEN"
-    fi
+    read -p "Token: " USER_TOKEN
+    TRAFFMONETIZER_TOKEN=${USER_TOKEN:-$DEFAULT_TOKEN}
+    echo "最终使用的 Token 为: $TRAFFMONETIZER_TOKEN"
     echo ""
 }
 
-# --- 函数：运行 Traffmonetizer 容器 ---
+# --- 函数：运行容器 ---
 run_traffmonetizer() {
-    echo "正在检测系统架构..."
+    echo "--- 正在准备启动容器 ---"
     ARCH=$(uname -m)
 
-    # 停止并删除旧的tm容器（如果存在）
-    echo "正在检查并停止/删除旧的 ${TRAFFMONETIZER_CONTAINER_NAME} 容器..."
-    if docker ps -a --format '{{.Names}}' | grep -q "${TRAFFMONETIZER_CONTAINER_NAME}"; then
-        docker stop "${TRAFFMONETIZER_CONTAINER_NAME}"
-        docker rm "${TRAFFMONETIZER_CONTAINER_NAME}"
-        echo "旧的 ${TRAFFMONETIZER_CONTAINER_NAME} 容器已停止并删除。"
-    else
-        echo "未找到旧的 ${TRAFFMONETIZER_CONTAINER_NAME} 容器。"
+    # 停止并删除旧容器
+    if docker ps -a --format '{{.Names}}' | grep -q "^${TRAFFMONETIZER_CONTAINER_NAME}$"; then
+        echo "正在清理旧容器..."
+        docker stop "${TRAFFMONETIZER_CONTAINER_NAME}" >/dev/null
+        docker rm "${TRAFFMONETIZER_CONTAINER_NAME}" >/dev/null
     fi
 
-    echo "根据架构启动 Traffmonetizer 容器..."
+    # 根据架构启动
+    # 这里的 --restart always 保证了 Docker 守护进程启动时容器会自动运行
     if [ "$ARCH" == "x86_64" ]; then
-        echo "检测到 AMD64 (x86_64) 架构，将运行 AMD64 版本的 Traffmonetizer 容器。"
+        echo "架构: AMD64"
         docker run -d --restart always --name "${TRAFFMONETIZER_CONTAINER_NAME}" traffmonetizer/cli_v2 start accept --token "$TRAFFMONETIZER_TOKEN"
     elif [ "$ARCH" == "aarch64" ]; then
-        echo "检测到 ARM64 (aarch64) 架构，将运行 ARM64 版本的 Traffmonetizer 容器。"
+        echo "架构: ARM64"
         docker run -d --restart always --name "${TRAFFMONETIZER_CONTAINER_NAME}" traffmonetizer/cli_v2:arm64v8 start accept --token "$TRAFFMONETIZER_TOKEN"
     else
-        echo "错误：不支持的系统架构: $ARCH。本脚本仅支持 AMD64 (x86_64) 和 ARM64 (aarch64) 架构。"
+        echo "错误：不支持的架构 $ARCH"
         exit 1
     fi
 
-    if [ $? -ne 0 ]; then
-        echo "错误：Traffmonetizer 容器启动失败，请检查 Docker 是否正常运行或 Token 是否有效。"
-        exit 1
-    fi
-    echo "Traffmonetizer 容器 '${TRAFFMONETIZER_CONTAINER_NAME}' 已成功启动！"
-}
-
-# --- 函数：设置每周一凌晨1点重启 cron job ---
-setup_cron_job() {
-    echo "正在设置每周一凌晨1点重启 Traffmonetizer 容器..."
-    
-    # 定义 cron job 命令
-    CRON_COMMAND="docker restart ${TRAFFMONETIZER_CONTAINER_NAME}"
-    
-    # 检查 cron job 是否已存在以避免重复添加
-    # 注意：这里 grep 的内容需要与我们即将添加的 cron job 表达式和命令完全匹配
-    # 为了避免因为时间不同而误判，我们只检查命令部分
-    if ! crontab -l 2>/dev/null | grep -q "${CRON_COMMAND}"; then
-        # 添加新的 cron job：每周一凌晨1点执行重启命令
-        (crontab -l 2>/dev/null; echo "0 1 * * 1 ${CRON_COMMAND}") | crontab -
-        
-        if [ $? -ne 0 ]; then
-            echo "警告：设置 cron job 失败，请手动检查或添加 cron job。"
-        else
-            echo "已设置每周一凌晨1点自动重启 '${TRAFFMONETIZER_CONTAINER_NAME}' 容器。"
-        fi
+    if [ $? -eq 0 ]; then
+        echo "容器 '${TRAFFMONETIZER_CONTAINER_NAME}' 已启动。"
     else
-        echo "每周一凌晨1点重启 '${TRAFFMONETIZER_CONTAINER_NAME}' 的 cron job 已存在。"
-        # 可选：如果你想确保时间也正确，可以在这里添加更精确的检查或更新逻辑
-        # 例如，可以检查是否已存在 "0 1 * * 1 docker restart ..."
+        echo "容器启动失败，请检查 Docker 或 Token。"
+        exit 1
     fi
 }
 
-# --- 主程序流程 ---
-echo "--- Traffmonetizer 一键安装及运行脚本 ---"
+# --- 函数：设置 Cron 定时任务 (关键改进点) ---
+setup_cron_job() {
+    echo "--- 正在设置定时重启任务 ---"
+    
+    # 1. 获取 Docker 绝对路径，确保 Cron 环境能找到命令
+    DOCKER_BIN=$(which docker)
+    [ -z "$DOCKER_BIN" ] && DOCKER_BIN="/usr/bin/docker"
 
-# 1. 安装  Docker
+    # 2. 构造 Cron 任务行（每周一凌晨1点重启，并记录日志到 /tmp）
+    CRON_COMMAND="$DOCKER_BIN restart ${TRAFFMONETIZER_CONTAINER_NAME} >> /tmp/tm_restart.log 2>&1"
+    CRON_SCHEDULE="0 1 * * 1"
+    NEW_CRON_LINE="$CRON_SCHEDULE $CRON_COMMAND"
+
+    # 3. 检查是否已存在该容器的重启任务，避免重复写入
+    if ! crontab -l 2>/dev/null | grep -q "restart ${TRAFFMONETIZER_CONTAINER_NAME}"; then
+        (crontab -l 2>/dev/null; echo "$NEW_CRON_LINE") | crontab -
+        echo "已添加定时任务：每周一凌晨 01:00 重启容器。"
+    else
+        echo "定时重启任务已存在，跳过设置。"
+    fi
+
+    # 4. 提示用户确保 Cron 服务已启动
+    if ! systemctl is-active --quiet cron && ! systemctl is-active --quiet crond; then
+        echo "警告：检测到系统 Cron 服务可能未运行，请手动执行 'sudo systemctl start cron' 以确保存储生效。"
+    fi
+}
+
+# --- 主程序 ---
+clear
+echo "================================================="
+echo "   Traffmonetizer 一键脚本 (优化版) "
+echo "================================================="
+
 install_docker
-
-# 2. 获取用户输入的 Token
 get_user_token
-
-# 3. 运行 Traffmonetizer 容器
 run_traffmonetizer
-
-# 4. 设置 cron job
 setup_cron_job
 
-echo ""
-echo "脚本执行完毕！"
-echo "您可以使用 'docker logs ${TRAFFMONETIZER_CONTAINER_NAME}' 查看容器日志。"
-
+echo "================================================="
+echo "脚本执行成功！"
+echo "查看容器状态: docker ps"
+echo "查看重启记录: cat /tmp/tm_restart.log (任务执行后生成)"
+echo "================================================="
