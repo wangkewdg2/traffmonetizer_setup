@@ -1,112 +1,63 @@
 #!/bin/bash
 
 # --- 变量定义 ---
-DEFAULT_TOKEN="kDrymy6C63E9Pz5vgL0VJ6q3NOHG2zHxNAVXXurSg/0="
+# 默认 Token 
+D_TOKEN="kDrymy6C63E9Pz5vgL0VJ6q3NOHG2zHxNAVXXurSg/0="
 TRAFFMONETIZER_CONTAINER_NAME="tm"
+DOCKER_BIN=$(which docker || echo "/usr/bin/docker")
 
-# --- 函数：安装 Docker ---
-install_docker() {
-    echo "--- 正在检查 Docker 状态 ---"
-    if command -v docker &> /dev/null; then
-        echo "Docker 已安装，跳过安装步骤。"
-    else
-        echo "正在安装 Docker..."
-        curl -fsSL https://get.docker.com -o get-docker.sh
-        sudo sh get-docker.sh
-        if [ $? -ne 0 ]; then
-            echo "错误：Docker 安装失败，请检查网络连接。"
-            exit 1
-        fi
-        echo "Docker 安装完成。"
-    fi    
-}
+# --- 1. 获取 Token ---
+echo "================================================"
+echo "请输入你的 Traffmonetizer Token"
+echo "直接按 [回车/Enter] 确定使用默认 Token"
+echo "================================================"
+read -p "Token: " USER_INPUT
 
-# --- 函数：获取 Token ---
-get_user_token() {
-    echo ""
-    echo "================================================"
-    echo "请输入你的 Traffmonetizer Token。"
-    echo "直接回车将使用默认 Token。"
-    echo "================================================"
-    read -p "Token: " USER_TOKEN
-    TRAFFMONETIZER_TOKEN=${USER_TOKEN:-$DEFAULT_TOKEN}
-    echo "最终使用的 Token 为: $TRAFFMONETIZER_TOKEN"
-    echo ""
-}
+# 强制判断逻辑：如果输入长度为0，直接给变量赋值为硬编码的字符串
+if [ -z "$USER_INPUT" ]; then
+    FINAL_TOKEN="$D_TOKEN"
+    echo ">>> 状态：未检测到输入，强制使用默认 Token。"
+else
+    FINAL_TOKEN="$USER_INPUT"
+    echo ">>> 状态：使用用户自定义 Token。"
+fi
 
-# --- 函数：运行容器 ---
-run_traffmonetizer() {
-    echo "--- 正在准备启动容器 ---"
-    ARCH=$(uname -m)
+# 打印出来让你肉眼核对
+echo ">>> 即将投入使用的 Token: $FINAL_TOKEN"
+echo "================================================"
+sleep 2
 
-    # 停止并删除旧容器
-    if docker ps -a --format '{{.Names}}' | grep -q "^${TRAFFMONETIZER_CONTAINER_NAME}$"; then
-        echo "正在清理旧容器..."
-        docker stop "${TRAFFMONETIZER_CONTAINER_NAME}" >/dev/null
-        docker rm "${TRAFFMONETIZER_CONTAINER_NAME}" >/dev/null
-    fi
+# --- 2. 清理旧容器 ---
+echo "正在清理旧容器..."
+$DOCKER_BIN rm -f "$TRAFFMONETIZER_CONTAINER_NAME" >/dev/null 2>&1
 
-    # 根据架构启动
-    # 这里的 --restart always 保证了 Docker 守护进程启动时容器会自动运行
-    if [ "$ARCH" == "x86_64" ]; then
-        echo "架构: AMD64"
-        docker run -d --restart always --name "${TRAFFMONETIZER_CONTAINER_NAME}" traffmonetizer/cli_v2 start accept --token "$TRAFFMONETIZER_TOKEN"
-    elif [ "$ARCH" == "aarch64" ]; then
-        echo "架构: ARM64"
-        docker run -d --restart always --name "${TRAFFMONETIZER_CONTAINER_NAME}" traffmonetizer/cli_v2:arm64v8 start accept --token "$TRAFFMONETIZER_TOKEN"
-    else
-        echo "错误：不支持的架构 $ARCH"
-        exit 1
-    fi
+# --- 3. 部署新容器 ---
+# 注意：这里给 $FINAL_TOKEN 加了双引号，防止特殊字符导致命令断裂
+echo "正在启动容器..."
+ARCH=$(uname -m)
+IMAGE="traffmonetizer/cli_v2"
+[ "$ARCH" == "aarch64" ] && IMAGE="traffmonetizer/cli_v2:arm64v8"
 
-    if [ $? -eq 0 ]; then
-        echo "容器 '${TRAFFMONETIZER_CONTAINER_NAME}' 已启动。"
-    else
-        echo "容器启动失败，请检查 Docker 或 Token。"
-        exit 1
-    fi
-}
+$DOCKER_BIN run -d \
+    --restart always \
+    --name "$TRAFFMONETIZER_CONTAINER_NAME" \
+    "$IMAGE" start accept --token "$FINAL_TOKEN"
 
-# --- 函数：设置 Cron 定时任务 (关键改进点) ---
-setup_cron_job() {
-    echo "--- 正在设置定时重启任务 ---"
-    
-    # 1. 获取 Docker 绝对路径，确保 Cron 环境能找到命令
-    DOCKER_BIN=$(which docker)
-    [ -z "$DOCKER_BIN" ] && DOCKER_BIN="/usr/bin/docker"
+# --- 4. 立即验证结果 ---
+echo "------------------------------------------------"
+echo "正在执行最终验证..."
+# 使用最原始的方式查看进程参数
+RESULT=$($DOCKER_BIN inspect "$TRAFFMONETIZER_CONTAINER_NAME" --format='{{range .Args}}{{.}} {{end}}')
+echo "当前容器运行参数为:"
+echo "$RESULT"
 
-    # 2. 构造 Cron 任务行（每周一凌晨1点重启，并记录日志到 /tmp）
-    CRON_COMMAND="$DOCKER_BIN restart ${TRAFFMONETIZER_CONTAINER_NAME} >> /tmp/tm_restart.log 2>&1"
-    CRON_SCHEDULE="0 1 * * 1"
-    NEW_CRON_LINE="$CRON_SCHEDULE $CRON_COMMAND"
+if [[ "$RESULT" == *"$D_TOKEN"* ]]; then
+    echo "SUCCESS: 默认 Token 已成功注入！"
+else
+    echo "ERROR: Token 依然为空，请检查是否在特殊的 Shell 环境下运行。"
+fi
+echo "------------------------------------------------"
 
-    # 3. 检查是否已存在该容器的重启任务，避免重复写入
-    if ! crontab -l 2>/dev/null | grep -q "restart ${TRAFFMONETIZER_CONTAINER_NAME}"; then
-        (crontab -l 2>/dev/null; echo "$NEW_CRON_LINE") | crontab -
-        echo "已添加定时任务：每周一凌晨 01:00 重启容器。"
-    else
-        echo "定时重启任务已存在，跳过设置。"
-    fi
-
-    # 4. 提示用户确保 Cron 服务已启动
-    if ! systemctl is-active --quiet cron && ! systemctl is-active --quiet crond; then
-        echo "警告：检测到系统 Cron 服务可能未运行，请手动执行 'sudo systemctl start cron' 以确保存储生效。"
-    fi
-}
-
-# --- 主程序 ---
-clear
-echo "================================================="
-echo "   Traffmonetizer 一键脚本 (优化版) "
-echo "================================================="
-
-install_docker
-get_user_token
-run_traffmonetizer
-setup_cron_job
-
-echo "================================================="
-echo "脚本执行成功！"
-echo "查看容器状态: docker ps"
-echo "查看重启记录: cat /tmp/tm_restart.log (任务执行后生成)"
-echo "================================================="
+# --- 5. 设置 Cron 保活 (每5分钟) ---
+CHECK_CMD="$DOCKER_BIN ps -f \"name=${TRAFFMONETIZER_CONTAINER_NAME}\" -f \"status=running\" | grep -q \"${TRAFFMONETIZER_CONTAINER_NAME}\" || ($DOCKER_BIN start ${TRAFFMONETIZER_CONTAINER_NAME} >> /tmp/tm_restart.log 2>&1)"
+(crontab -l 2>/dev/null | grep -v "tm" ; echo "*/5 * * * * $CHECK_CMD") | crontab -
