@@ -32,7 +32,7 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/wangkewdg2/traffmonetize
 
 ✨ 脚本特性
 
-自动重启： 脚本会在每周一凌晨 1 点自动重启 Traffmonetizer，有效避免掉线。
+自动重启： 每小时健康检查，断线则重启，有效避免掉线。
 
 广泛兼容： 理论上支持任何操作系统（通过 Docker 运行），并兼容 AMD64 或 ARM64 位处理器。
 
