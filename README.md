@@ -22,7 +22,7 @@
    
 在VPS 上输入以下命令并执行：
 
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/wangkewdg2/traffmonetizer_setup/main/tm.sh)"
+curl -sSL https://raw.githubusercontent.com/wangkewdg2/traffmonetizer_setup/refs/heads/main/tm.sh | bash
 
 3. 输入 Token
 
