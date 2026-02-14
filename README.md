@@ -22,7 +22,7 @@
    
 在VPS 上输入以下命令并执行：
 
-curl -sSL https://raw.githubusercontent.com/wangkewdg2/traffmonetizer_setup/refs/heads/main/tm.sh | bash
+wget -O tm.sh https://raw.githubusercontent.com/wangkewdg2/traffmonetizer_setup/refs/heads/main/tm.sh && chmod +x tm.sh && ./tm.sh
 
 3. 输入 Token
 
